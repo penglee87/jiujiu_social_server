@@ -1,18 +1,14 @@
-from datetime import datetime
-import hashlib
-from werkzeug.security import generate_password_hash, check_password_hash
-from authlib.jose import jwt
-import time
+from datetime import datetime, timedelta
+from authlib.jose import jwt, JoseError
 from flask import current_app, request, url_for
-from flask_login import UserMixin, AnonymousUserMixin
 from app.exceptions import ValidationError
-from app import db, login_manager
+from app import db
 from .follow import Follow
 from .role import Role, Permission
 from .post import Post
 
 
-class User(UserMixin, db.Model):
+class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     openid = db.Column(db.String(64), nullable=False, unique=True, comment='微信openid')
@@ -126,20 +122,24 @@ class User(UserMixin, db.Model):
         }
         return json_user
 
+    def generate_jwt(self, expires_in=3600):
+        now = datetime.utcnow()
+        payload = {
+            'user_id': self.id,
+            'exp': now + timedelta(seconds=expires_in),
+            'iat': now
+        }
+        token = jwt.encode({'alg': 'HS256'}, payload, current_app.config['JWT_SECRET_KEY'])
+        return token.decode('utf-8')
+
+    @staticmethod
+    def verify_jwt(token):
+        try:
+            payload = jwt.decode(token, current_app.config['JWT_SECRET_KEY'])
+            return User.query.get(payload['user_id'])
+        except (JoseError, KeyError):
+            return None
 
     def __repr__(self):
         return '<User %r>' % self.username
 
-class AnonymousUser(AnonymousUserMixin):
-    def can(self, permissions):
-        return False
-
-    def is_administrator(self):
-        return False
-
-login_manager.anonymous_user = AnonymousUser
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))

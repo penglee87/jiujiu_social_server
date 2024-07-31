@@ -2,14 +2,16 @@
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
+from app.services.wechat_service import get_wechat_session
 from app.models import User, ChatRoom, Message
 from app.models.chat_service import create_chat_room, add_user_to_chat_room
 from . import api_bl
 
 @api_bl.route('/chat/create', methods=['POST'])
-@jwt_required()
 def create_chat():
-    openid = get_jwt_identity()
+    data = request.get_json()
+    session_data = get_wechat_session(data['code'])
+    openid = session_data.get('openid')
     current_user = User.query.filter_by(openid=openid).first()
     
     data = request.get_json()
@@ -31,11 +33,14 @@ def create_chat():
     return jsonify({'message': 'Chat room created', 'chat_room_id': chat_room.id}), 201
 
 @api_bl.route('/chat/<int:chat_room_id>/messages', methods=['GET'])
-@jwt_required()
 def get_chat_messages(chat_room_id):
-    chat_room = ChatRoom.query.get_or_404(chat_room_id)    
-    openid = get_jwt_identity()
+    data = request.get_json()
+    session_data = get_wechat_session(data['code'])
+    openid = session_data.get('openid')
     current_user = User.query.filter_by(openid=openid).first()
+
+    chat_room = ChatRoom.query.get_or_404(chat_room_id)   
+    
     if current_user not in chat_room.users:
         return jsonify({'message': 'Access denied'}), 403
 
@@ -48,15 +53,17 @@ def get_chat_messages(chat_room_id):
     } for message in messages])
 
 @api_bl.route('/chat/<int:chat_room_id>/send_message', methods=['POST'])
-@jwt_required()
 def send_message(chat_room_id):
     data = request.get_json()
     if not data or 'body' not in data:
         return jsonify({'message': 'Message body is required'}), 400
-
+    
     chat_room = ChatRoom.query.get_or_404(chat_room_id)
-    openid = get_jwt_identity()
+
+    session_data = get_wechat_session(data['code'])
+    openid = session_data.get('openid')
     current_user = User.query.filter_by(openid=openid).first()
+
     if current_user not in chat_room.users:
         return jsonify({'message': 'Access denied'}), 403
 

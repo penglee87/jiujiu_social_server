@@ -45,8 +45,8 @@ class Message(db.Model):
         }
         if self.author:
             json_message['author'] = {
-                'id': self.author.id,
-                'username': self.author.username,
+                'id': self.author.user_id,
+                'nikename': self.author.nikename,
             }
         return json_message
 

@@ -1,6 +1,6 @@
 import datetime
 from flask import jsonify, request, g, url_for, current_app
-from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Post, User
 from app.services.wechat_service import get_wechat_session
@@ -57,92 +57,92 @@ def get_post(id):
 
 
 
-@api_bl.route('/create_post', methods=['POST'])
-def create_post():
-    data = request.get_json()
-    print('create_post_data', data)
-
-    try:
-        session_data = get_wechat_session(data['code'])
-        if session_data:
-            print('create_post_session_data', session_data)
-            openid = session_data.get('openid')
-            if not openid:
-                return jsonify({'message': 'WeChat API did not return openid'}), 400
-
-            user = User.query.filter_by(openid=openid).first()
-            if user:
-                body = data.get('body')
-                post_image_url = data.get('post_image_url')
-                is_anon = data.get('is_anon', False)
-
-                if not body:
-                    return jsonify({'message': 'Post content is required'}), 400
-
-                post = Post(
-                    body=body,
-                    post_image_url=post_image_url,
-                    is_anon=is_anon,
-                    author_id=user.id,  # Use the found user's id instead of current_user.id
-                    #timestamp=datetime.utcnow(),
-                    is_delete=False
-                )
-                db.session.add(post)
-                db.session.commit()
-
-                return jsonify({
-                    'message': 'Post created successfully',
-                    'post_id': post.id,
-                    'author_id': user.id,  # Use the found user's id instead of current_user.id
-                    'received_data': data
-                }), 200
-            else:
-                return jsonify({'message': 'User not found for the given openid'}), 404
-        else:
-            return jsonify({'message': 'Failed to create post due to invalid session data'}), 400
-    except Exception as e:
-        current_app.logger.error(f"Error occurred in create_post: {e}")
-        return jsonify({'message': 'An error occurred while processing the request'}), 500
+#@api_bl.route('/create_post', methods=['POST'])
+#def create_post():
+#    data = request.get_json()
+#    print('create_post_data', data)
+#
+#    try:
+#        session_data = get_wechat_session(data['code'])
+#        if session_data:
+#            print('create_post_session_data', session_data)
+#            openid = session_data.get('openid')
+#            if not openid:
+#                return jsonify({'message': 'WeChat API did not return openid'}), 400
+#
+#            user = User.query.filter_by(openid=openid).first()
+#            if user:
+#                body = data.get('body')
+#                post_image_url = data.get('post_image_url')
+#                is_anon = data.get('is_anon', False)
+#
+#                if not body:
+#                    return jsonify({'message': 'Post content is required'}), 400
+#
+#                post = Post(
+#                    body=body,
+#                    post_image_url=post_image_url,
+#                    is_anon=is_anon,
+#                    author_id=user.id,  # Use the found user's id instead of current_user.id
+#                    #timestamp=datetime.utcnow(),
+#                    is_delete=False
+#                )
+#                db.session.add(post)
+#                db.session.commit()
+#
+#                return jsonify({
+#                    'message': 'Post created successfully',
+#                    'post_id': post.id,
+#                    'author_id': user.id,  # Use the found user's id instead of current_user.id
+#                    'received_data': data
+#                }), 200
+#            else:
+#                return jsonify({'message': 'User not found for the given openid'}), 404
+#        else:
+#            return jsonify({'message': 'Failed to create post due to invalid session data'}), 400
+#    except Exception as e:
+#        current_app.logger.error(f"Error occurred in create_post: {e}")
+#        return jsonify({'message': 'An error occurred while processing the request'}), 500
    
 
 
 
+@api_bl.route('/create_post', methods=['POST'])
+@jwt_required()
+def create_post():
+    openid = get_jwt_identity()
+    user = User.query.filter_by(openid=openid).first()
+    
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
 
-#@api_bl.route('/create_post', methods=['POST'])
-#@login_required
-#def create_post():
-#    data = request.get_json()
-#    current_app.logger.info(f"create_post_data: {data}")
-#    current_app.logger.info(f"create_post_current_user.id: {current_user.id}")
-#    print('create_post_data2', data)
-#    print('create_post_current_user.id2', current_user.id)
-#
-#    try:    
-#        body = data.get('body')
-#        post_image_url = data.get('post_image_url')
-#        is_anon = data.get('is_anon', False)
-#
-#        if not body:
-#            return jsonify({'message': 'Post content is required'}), 400
-#
-#        post = Post(
-#            body=body,
-#            post_image_url=post_image_url,
-#            is_anon=is_anon,
-#            author_id=current_user.id,
-#            timestamp=datetime.utcnow(),
-#            is_delete=False
-#        )
-#        db.session.add(post)
-#        db.session.commit()
-#
-#        return jsonify({
-#            'message': 'Post created successfully', 
-#            'post_id': post.id,
-#            'author_id': current_user.id,
-#            'received_data': data        
-#            }), 201
-#    except Exception as e:
-#        print('exceptexcept')
-#        current_app.logger.error(f"Error occurred in create_post: {e}")
-#        return jsonify({'message': 'An error occurred while processing the request'}), 500#
+    data = request.get_json()
+    print('create_post_data', data)
+
+    try:
+        body = data.get('body')
+        post_image_url = data.get('post_image_url')
+        is_anon = data.get('is_anon', False)
+
+        if not body:
+            return jsonify({'message': 'Post content is required'}), 400
+
+        post = Post(
+            body=body,
+            post_image_url=post_image_url,
+            is_anon=is_anon,
+            author_id=user.id,  # Use the authenticated user's id
+            is_delete=False
+        )
+        db.session.add(post)
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Post created successfully',
+            'post_id': post.id,
+            'author_id': user.id,  # Use the authenticated user's id
+            'received_data': data
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Error occurred in create_post: {e}")
+        return jsonify({'message': 'An error occurred while processing the request'}), 500

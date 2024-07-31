@@ -9,28 +9,6 @@ from app.services.wechat_service import get_wechat_session
 from flask import request, jsonify
 from . import api_bl
 
-@api_bl.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    print('login_data', data)
-
-    session_data = get_wechat_session(data['code'])
-    if session_data:
-        print('login_session_data', session_data)
-        openid = session_data['openid']
-        # 检查用户是否存在
-        user = User.query.filter_by(openid=openid).first()
-        if user:
-            login_user(user)
-            user_info = user.to_json()
-            return jsonify({'message': 'User logged in successfully',
-                            'data': user_info
-                            }), 200
-        else:
-            return jsonify({'message': 'User not found'}), 200
-    else:
-        return jsonify({'message': 'Error logging in user'}), 400
-
 #@api_bl.route('/login', methods=['POST'])
 #def login():
 #    data = request.get_json()
@@ -43,16 +21,38 @@ def login():
 #        # 检查用户是否存在
 #        user = User.query.filter_by(openid=openid).first()
 #        if user:
-#            access_token = create_access_token(identity=user.id)
+#            login_user(user)
 #            user_info = user.to_json()
 #            return jsonify({'message': 'User logged in successfully',
-#                            'data': user_info,
-#                            'access_token': access_token
+#                            'data': user_info
 #                            }), 200
 #        else:
 #            return jsonify({'message': 'User not found'}), 200
 #    else:
 #        return jsonify({'message': 'Error logging in user'}), 400
+
+@api_bl.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    print('login_data', data)
+
+    session_data = get_wechat_session(data['code'])
+    if session_data:
+        print('login_session_data', session_data)
+        openid = session_data['openid']
+        # 检查用户是否存在
+        user = User.query.filter_by(openid=openid).first()
+        if user:
+            access_token = create_access_token(identity=user.openid)
+            user_info = user.to_json()
+            return jsonify({'message': 'User logged in successfully',
+                            'data': user_info,
+                            'access_token': access_token
+                            }), 200
+        else:
+            return jsonify({'message': 'User not found'}), 200
+    else:
+        return jsonify({'message': 'Error logging in user'}), 400
 
 
 
@@ -145,8 +145,9 @@ def profile_edit():
                 user.gender = gender
                 user.birthdate = birthdate
                 db.session.commit()
+                user_info = user.to_json()
                 return jsonify({'message': 'User profile edited successfully',
-                                'userInfo': user.to_json()
+                                'data': user_info
                                 }), 200
             else:
                 return jsonify({'message': 'User not found'}), 404

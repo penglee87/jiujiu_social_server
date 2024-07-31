@@ -8,7 +8,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
+    #SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
+    JWT_SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.qq.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in \
