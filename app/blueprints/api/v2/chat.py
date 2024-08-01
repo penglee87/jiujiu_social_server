@@ -6,7 +6,7 @@ from app.models import User, ChatRoom, Message
 from app.models.chat_service import create_chat_room, add_user_to_chat_room
 from . import api_bl
 
-@api_bl.route('/chat/create', methods=['POST'])
+@api_bl.route('/chat/create_chat', methods=['POST'])
 @jwt_required()
 def create_chat():
     openid = get_jwt_identity()
@@ -27,8 +27,10 @@ def create_chat():
         chat_room = create_chat_room(chat_room_name)
         add_user_to_chat_room(chat_room, current_user)
         add_user_to_chat_room(chat_room, recipient)
+        return jsonify({'message': 'Chat room created', 'chat_room_id': chat_room.id}), 200
+    else:
+        return jsonify({'message': 'Chat room already exists', 'chat_room_id': chat_room.id}), 200
 
-    return jsonify({'message': 'Chat room created', 'chat_room_id': chat_room.id}), 201
 
 @api_bl.route('/chat/<int:chat_room_id>/messages', methods=['GET'])
 @jwt_required()
@@ -47,25 +49,35 @@ def get_chat_messages(chat_room_id):
         'author_id': message.author_id
     } for message in messages])
 
+
 @api_bl.route('/chat/<int:chat_room_id>/send_message', methods=['POST'])
 @jwt_required()
 def send_message(chat_room_id):
+    openid = get_jwt_identity()
+    current_user = User.query.filter_by(openid=openid).first()
+    print('send_message_current_user',current_user)
     data = request.get_json()
+    print('send_message_data',data)
     if not data or 'body' not in data:
         return jsonify({'message': 'Message body is required'}), 400
 
-    chat_room = ChatRoom.query.get_or_404(chat_room_id)
-    openid = get_jwt_identity()
-    current_user = User.query.filter_by(openid=openid).first()
-    if current_user not in chat_room.users:
-        return jsonify({'message': 'Access denied'}), 403
+    try:
+        chat_room = ChatRoom.query.get_or_404(chat_room_id)
+        #if current_user not in chat_room.users:
+        #    return jsonify({'message': 'Access denied'}), 403
 
-    message = Message(body=data['body'], author_id=current_user.id, chat_room_id=chat_room.id)
-    db.session.add(message)
-    db.session.commit()
+        message = Message(
+            body=data['body'], 
+            author_id=current_user.id, 
+            chat_room_id=chat_room.id
+            )
+        print('send_message_message',message)
+        db.session.add(message)
+        db.session.commit()
 
-    return jsonify({'message': 'Message sent', 'message_id': message.id}), 201
-
+        return jsonify({'message': 'Message sent', 'message_id': message.id}), 200
+    except:
+        return jsonify({'message': 'Error occurred'}), 500
 
 
 
