@@ -1,7 +1,8 @@
 # app/blueprints/api/v2/chat.py
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import db
+from flask_socketio import emit, join_room, leave_room
+from app import db, socketio
 from app.models import User, ChatRoom, Message
 from app.models.chat_service import create_chat_room, add_user_to_chat_room
 from . import api_bl
@@ -75,9 +76,30 @@ def send_message(chat_room_id):
         db.session.add(message)
         db.session.commit()
 
+        # 使用 SocketIO 发送消息
+        socketio.emit('new_message', {
+            'id': message.id,
+            'body': message.body,
+            'timestamp': message.timestamp,
+            'author_id': message.author_id
+        }, room=chat_room.name)
+
         return jsonify({'message': 'Message sent', 'message_id': message.id}), 200
     except:
         return jsonify({'message': 'Error occurred'}), 500
+    
+
+#@socketio.on('join')
+#def handle_join(data):
+#    room = data['room']
+#    join_room(room)
+#    emit('status', {'msg': f'{data["username"]} has entered the room.'}, room=room)
+#
+#@socketio.on('leave')
+#def handle_leave(data):
+#    room = data['room']
+#    leave_room(room)
+#    emit('status', {'msg': f'{data["username"]} has left the room.'}, room=room)
 
 
 

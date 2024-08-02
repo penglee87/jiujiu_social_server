@@ -2,9 +2,9 @@ import os
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-#dotenv_path = os.path.join(basedir, '.env')
-#if os.path.exists(dotenv_path):
-#    load_dotenv(dotenv_path)
+dotenv_path = os.path.join(basedir, '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
 
 
 class Config:
@@ -12,8 +12,7 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.qq.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in \
-        ['true', 'on', '1']
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME','380517767@qq.com')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD','******')
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'

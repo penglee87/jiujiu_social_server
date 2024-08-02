@@ -37,8 +37,6 @@ def create_app(config_name):
     #login_manager.init_app(app)
     jwt.init_app(app)
     pagedown.init_app(app)
-    socketio.init_app(app)
-    pagedown.init_app(app)
     #register_extensions(app)
 
     #from app.blueprints.api.v0 import api_bl
@@ -49,6 +47,10 @@ def create_app(config_name):
 
     from app.blueprints.api.v2 import api_bl as api_v2_bl
     app.register_blueprint(api_v2_bl, url_prefix='/api/v2')
+
+    
+    from . import events
+    socketio.init_app(app)
 
     #from app.blueprints.api.v3 import create_v3
     #app.register_blueprint(create_v3(), url_prefix='/api/v3')

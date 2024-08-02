@@ -112,6 +112,7 @@ class User(db.Model):
     def to_json(self):
         json_user = {
             'user_id': self.id,
+            'openid': self.openid,
             'avatar_url': self.avatar_url,
             'nickname': self.nickname,
             'gender': self.gender,
