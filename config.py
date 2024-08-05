@@ -8,8 +8,8 @@ if os.path.exists(dotenv_path):
 
 
 class Config:
-    #SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
-    JWT_SECRET_KEY = os.environ.get('SECRET_KEY') or 'your_secret_key'
+    #SECRET_KEY = os.environ.get('SECRET_KEY','your_secret_key')
+    JWT_SECRET_KEY = os.environ.get('SECRET_KEY','your_secret_key')
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.qq.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
@@ -22,8 +22,8 @@ class Config:
     FLASKY_POSTS_PER_PAGE = 20
     FLASKY_FOLLOWERS_PER_PAGE = 50
     FLASKY_COMMENTS_PER_PAGE = 30
-    WECHAT_APPID = os.environ.get('WECHAT_APPID') or 'wxee9a920f1b1275c2'
-    WECHAT_APPSECRET = os.environ.get('WECHAT_APPSECRET') or 'c31df25075d020fa02b95971bca42669'
+    WECHAT_APPID = os.environ.get('WECHAT_APPID')
+    WECHAT_APPSECRET = os.environ.get('WECHAT_APPSECRET')
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'app', 'static', 'uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 

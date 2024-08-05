@@ -1,7 +1,8 @@
 import requests
 import os
+from datetime import timedelta
 from flask import current_app
-from flask_login import login_user
+#from flask_login import login_user
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from app.models import User
 from app import db
@@ -43,7 +44,7 @@ def login():
         # 检查用户是否存在
         user = User.query.filter_by(openid=openid).first()
         if user:
-            access_token = create_access_token(identity=user.openid)
+            access_token = create_access_token(identity=user.openid,expires_delta=timedelta(minutes=30))
             user_info = user.to_json()
             return jsonify({'message': 'User logged in successfully',
                             'data': user_info,

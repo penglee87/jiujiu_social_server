@@ -43,12 +43,19 @@ def get_chat_messages(chat_room_id):
         return jsonify({'message': 'Access denied'}), 403
 
     messages = Message.query.filter_by(chat_room_id=chat_room_id).order_by(Message.timestamp).all()
-    return jsonify([{
+    formatted_messages = []
+    for message in messages:
+        formatted_messages.append({
         'id': message.id,
         'body': message.body,
         'timestamp': message.timestamp,
         'author_id': message.author_id
-    } for message in messages])
+    })
+
+    return jsonify({
+        "message": "Messages loaded successfully",
+        "data": formatted_messages
+    }), 200
 
 
 @api_bl.route('/chat/<int:chat_room_id>/send_message', methods=['POST'])
