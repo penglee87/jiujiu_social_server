@@ -3,10 +3,16 @@ from authlib.jose import jwt, JoseError
 from flask import current_app, request, url_for
 from app.exceptions import ValidationError
 from app import db
-from .follow import Follow
+#from .follow import Follow
 from .role import Role, Permission
 from .post import Post
 
+
+class Follow(db.Model):
+    __tablename__ = 'follows'
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -95,19 +101,16 @@ class User(db.Model):
     def is_following(self, user):
         if user.id is None:
             return False
-        return self.followed.filter_by(
-            followed_id=user.id).first() is not None
+        return self.followed.filter_by(followed_id=user.id).first() is not None
 
     def is_followed_by(self, user):
         if user.id is None:
             return False
-        return self.followers.filter_by(
-            follower_id=user.id).first() is not None
+        return self.followers.filter_by(follower_id=user.id).first() is not None
 
     @property
     def followed_posts(self):
-        return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
-            .filter(Follow.follower_id == self.id)
+        return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.id)
 
     def to_json(self):
         json_user = {
@@ -143,4 +146,5 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User %r>' % self.nickname
+
 
