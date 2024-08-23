@@ -9,7 +9,7 @@ class ChatRoom(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     is_delete = db.Column(db.Boolean, default=False)
-    messages = db.relationship('Message', back_populates='chat_room', lazy='dynamic')
+    chat_messages = db.relationship('ChatMessage', back_populates='chat_room', lazy='dynamic')
     users = db.relationship('User', secondary='user_chat_rooms', back_populates='chat_rooms')
 
 # 用户聊天室关系表
@@ -23,8 +23,8 @@ class UserChatRoom(db.Model):
 
 
 # 消息类
-class Message(db.Model):
-    __tablename__ = 'messages'
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_messages'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
@@ -32,8 +32,8 @@ class Message(db.Model):
     chat_room_id = db.Column(db.Integer, db.ForeignKey('chat_rooms.id'), nullable=True)
     is_delete = db.Column(db.Boolean, default=False)
     
-    author = db.relationship('User', back_populates='messages')
-    chat_room = db.relationship('ChatRoom', back_populates='messages')
+    author = db.relationship('User', back_populates='chat_messages')
+    chat_room = db.relationship('ChatRoom', back_populates='chat_messages')
 
     def to_json(self):
         json_message = {
@@ -55,5 +55,5 @@ class Message(db.Model):
         body = json_message.get('body')
         if not body:
             raise ValidationError('Message does not have a body')
-        return Message(body=body)
+        return ChatMessage(body=body)
     

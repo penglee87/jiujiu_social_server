@@ -7,7 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 #from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_pagedown import PageDown
-from flask_socketio import SocketIO
+#from flask_socketio import SocketIO
+#from flask_cors import CORS
 from config import config
 
 
@@ -16,7 +17,8 @@ mail = Mail()
 moment = Moment()
 db = SQLAlchemy()
 pagedown = PageDown()
-socketio = SocketIO()
+#socketio = SocketIO()
+#cors = CORS()
 
 #login_manager = LoginManager()
 #login_manager.login_view = 'api_v2.login'
@@ -49,8 +51,9 @@ def create_app(config_name):
     app.register_blueprint(api_v2_bl, url_prefix='/api/v2')
 
     
-    from . import events
-    socketio.init_app(app)
+    #from . import events
+    #socketio.init_app(app)
+    #cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
 
     #from app.blueprints.api.v3 import create_v3
     #app.register_blueprint(create_v3(), url_prefix='/api/v3')

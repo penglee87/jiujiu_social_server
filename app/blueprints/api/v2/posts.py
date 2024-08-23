@@ -3,8 +3,6 @@ from flask import jsonify, request, g, url_for, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models import Post, User
-from app.services.wechat_service import get_wechat_session
-from app.decorators import admin_required, permission_required
 from . import api_bl
 
 
@@ -31,12 +29,18 @@ def get_posts():
             'timestamp': post.timestamp,
             'author': author.to_json(),
         })
-    return jsonify({
+    response = jsonify({
         'posts': posts_data,
         'prev': prev,
         'next': next,
         'count': pagination.total
     })
+        
+    # 设置跨源隔离所需的 HTTP 头部
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
+    response.headers['Cross-Origin-Embedder-Policy'] = 'require-corp'
+
+    return response
 
 
 @api_bl.route('/posts/<int:id>')
@@ -131,7 +135,7 @@ def create_post():
             body=body,
             post_image_url=post_image_url,
             is_anon=is_anon,
-            author_id=user.id,  # Use the authenticated user's id
+            author_id=user.id,
             is_delete=False
         )
         db.session.add(post)
@@ -140,7 +144,7 @@ def create_post():
         return jsonify({
             'message': 'Post created successfully',
             'post_id': post.id,
-            'author_id': user.id,  # Use the authenticated user's id
+            'author_id': user.id,
             'received_data': data
         }), 200
     except Exception as e:

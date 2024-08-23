@@ -38,8 +38,10 @@ class User(db.Model):
     
     posts = db.relationship('Post', back_populates='author', lazy='dynamic')
     comments = db.relationship('Comment', back_populates='author', lazy='dynamic')
-    messages = db.relationship('Message', back_populates ='author')
+    chat_messages = db.relationship('ChatMessage', back_populates ='author')
     chat_rooms = db.relationship('ChatRoom', secondary='user_chat_rooms', back_populates='users')
+    lab_messages = db.relationship('LabMessage', back_populates ='author')
+    lab_rooms = db.relationship('LabRoom', secondary='user_lab_rooms', back_populates='users')
     followed = db.relationship('Follow',
                                foreign_keys=[Follow.follower_id],
                                backref=db.backref('follower', lazy='joined'),

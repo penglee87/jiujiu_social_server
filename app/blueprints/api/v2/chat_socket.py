@@ -1,8 +1,9 @@
 # app/blueprints/api/v2/chat.py
 from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import db
-from app.models import User, ChatRoom, ChatMessage
+from flask_socketio import emit, join_room, leave_room
+from app import db, socketio
+from app.models import User, ChatRoom, Message
 from app.models.chat_service import create_chat_room, add_user_to_chat_room
 from . import api_bl
 
@@ -41,7 +42,7 @@ def get_chat_messages(chat_room_id):
     if current_user not in chat_room.users:
         return jsonify({'message': 'Access denied'}), 403
 
-    messages = ChatMessage.query.filter_by(chat_room_id=chat_room_id).order_by(ChatMessage.timestamp).all()
+    messages = Message.query.filter_by(chat_room_id=chat_room_id).order_by(Message.timestamp).all()
     formatted_messages = []
     for message in messages:
         formatted_messages.append({
@@ -73,7 +74,7 @@ def send_message(chat_room_id):
         #if current_user not in chat_room.users:
         #    return jsonify({'message': 'Access denied'}), 403
 
-        message = ChatMessage(
+        message = Message(
             body=data['body'], 
             author_id=current_user.id, 
             chat_room_id=chat_room.id
@@ -81,6 +82,14 @@ def send_message(chat_room_id):
         print('send_message_message',message)
         db.session.add(message)
         db.session.commit()
+
+        # 使用 SocketIO 发送消息
+        socketio.emit('new_message', {
+            'id': message.id,
+            'body': message.body,
+            'timestamp': message.timestamp,
+            'author_id': message.author_id
+        }, room=chat_room.name)
 
         return jsonify({'message': 'Message sent', 'message_id': message.id}), 200
     except:
