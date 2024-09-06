@@ -19,9 +19,9 @@ class Config:
     FLASKY_MAIL_SENDER = '380517767@qq.com'
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN','380517767@qq.com')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    FLASKY_POSTS_PER_PAGE = 20
-    FLASKY_FOLLOWERS_PER_PAGE = 50
-    FLASKY_COMMENTS_PER_PAGE = 30
+    FLASKY_POSTS_PER_PAGE = 10
+    FLASKY_COMMENTS_PER_PAGE = 10
+    FLASKY_FOLLOWERS_PER_PAGE = 20
     WECHAT_APPID = os.environ.get('WECHAT_APPID')
     WECHAT_APPSECRET = os.environ.get('WECHAT_APPSECRET')
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'app', 'static', 'uploads')

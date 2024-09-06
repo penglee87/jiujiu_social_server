@@ -12,7 +12,7 @@ class Post(db.Model):
     like_count = db.Column(db.Integer, default=0, comment='点赞次数')
     comment_count = db.Column(db.Integer, default=0, comment='评论次数')
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     is_comments_enabled = db.Column(db.Boolean, comment='是否禁用评论')
     is_visible = db.Column(db.Boolean, comment='是否公开')
     is_delete = db.Column(db.Boolean, default=False)
@@ -21,14 +21,15 @@ class Post(db.Model):
     comments = db.relationship('Comment', back_populates='post', lazy='dynamic')
 
     def to_json(self):
-        blueprint_name = request.blueprint
         json_post = {
-            'url': url_for(f'{blueprint_name}.get_post', id=self.id),
+            'id': self.id,
             'body': self.body,
-            'timestamp': self.timestamp,
-            'author_url': url_for(f'{blueprint_name}.get_user', id=self.author_id),
-            'comments_url': url_for(f'{blueprint_name}.get_post_comments', id=self.id),
-            'comment_count': self.comments.filter_by(is_delete=False).count()
+            'post_image_url': self.post_image_url,
+            'is_anon': self.is_anon,
+            'like_count': self.like_count,
+            'comment_count': self.comment_count,
+            'created_at': self.created_at.isoformat() + 'Z',
+            'author': self.author.to_json() if self.author else None
         }
         return json_post
 
@@ -45,7 +46,7 @@ class Comment(db.Model):
     __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
     parent_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True)  # 父评论ID，用于追评
@@ -59,7 +60,7 @@ class Comment(db.Model):
         json_comment = {
             'id': self.id,
             'body': self.body,
-            'timestamp': self.timestamp.isoformat() + 'Z',
+            'created_at': self.created_at.isoformat() + 'Z',
             'author': self.author.to_json() if self.author else None,
             'replies': [reply.to_json() for reply in self.replies if not reply.is_delete]  # 过滤掉已删除的评论
         }

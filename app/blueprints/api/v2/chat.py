@@ -41,14 +41,14 @@ def get_chat_messages(chat_room_id):
     if current_user not in chat_room.users:
         return jsonify({'message': 'Access denied'}), 403
 
-    messages = ChatMessage.query.filter_by(chat_room_id=chat_room_id).order_by(ChatMessage.timestamp).all()
+    messages = ChatMessage.query.filter_by(chat_room_id=chat_room_id).order_by(ChatMessage.created_at).all()
     formatted_messages = []
     for message in messages:
         formatted_messages.append({
         'id': message.id,
         'body': message.body,
-        'timestamp': message.timestamp,
-        'author_id': message.author_id
+        'created_at': message.created_at,
+        'user_id': message.user_id
     })
 
     return jsonify({
@@ -70,22 +70,62 @@ def send_message(chat_room_id):
 
     try:
         chat_room = ChatRoom.query.get_or_404(chat_room_id)
-        #if current_user not in chat_room.users:
-        #    return jsonify({'message': 'Access denied'}), 403
+        if current_user not in chat_room.users:
+            return jsonify({'message': 'Access denied'}), 403
 
-        message = ChatMessage(
+        chat_message = ChatMessage(
             body=data['body'], 
-            author_id=current_user.id, 
+            user_id=current_user.id, 
             chat_room_id=chat_room.id
             )
-        print('send_message_message',message)
-        db.session.add(message)
+        print('send_message_message',chat_message)
+        db.session.add(chat_message)
+        # 更新其他用户的未读消息计数
+        for user in chat_room.users:
+            if user != current_user:
+                chat_room.increment_unread_count(user)
         db.session.commit()
 
-        return jsonify({'message': 'Message sent', 'message_id': message.id}), 200
-    except:
-        return jsonify({'message': 'Error occurred'}), 500
+        return jsonify({'message': 'Message sent', 'message_id': chat_message.id}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': 'Error occurred', 'error': str(e)}), 500
     
+
+@api_bl.route('/chat/rooms', methods=['GET'])
+@jwt_required()
+def get_chat_rooms():
+    openid = get_jwt_identity()
+    current_user = User.query.filter_by(openid=openid).first()
+    if not current_user:
+        return jsonify({'message': 'User not found'}), 404
+
+    chat_rooms = ChatRoom.query.join(ChatRoom.users).filter(User.id == current_user.id).all()
+    formatted_rooms = []
+    for room in chat_rooms:
+        # 获取最后一条消息
+        last_message = ChatMessage.query.filter_by(chat_room_id=room.id).order_by(ChatMessage.created_at.desc()).first()
+        
+        # 解析房间名
+        user_ids = [int(uid) for uid in room.name.split('_')]
+        recipient_id = next(uid for uid in user_ids if uid != current_user.id)
+
+        formatted_rooms.append({
+            'room_id': room.id,
+            'recipient_id':recipient_id,
+            'last_message': {
+                'body': last_message.body if last_message else '',
+                'created_at': last_message.created_at.isoformat() if last_message else ''
+            },
+            'unread_count': room.unread_messages(current_user)  # 获取未读消息计数
+        })
+
+    return jsonify({
+        "message": "Chat rooms loaded successfully",
+        "data": formatted_rooms
+    }), 200
+
+
 
 #@socketio.on('join')
 #def handle_join(data):

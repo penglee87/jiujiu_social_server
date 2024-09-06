@@ -73,10 +73,11 @@ def register():
             nickname = data.get('nickname')
             gender = data.get('gender')
             birthdate = data.get('birthDate')
-            user = User(openid=openid, avatar_url=avatar_url, nickname=nickname, gender=gender, birthdate=birthdate)
+            user = User(openid=openid, avatar_url=avatar_url, nickname=nickname, gender=gender, birthdate=birthdate)            
             db.session.add(user)
             db.session.commit()
-            return jsonify({'message': 'User registered successfully'}), 200
+            return jsonify({'message': 'User registered successfully'
+                            }), 200
         else:
             return jsonify({'message': 'User already exists'}), 200
     else:
@@ -105,7 +106,6 @@ def profile():
             'data': user_info
         }), 200
     else:
-        print('User not found')
         return jsonify({'message': 'User not found'}), 200
 
     

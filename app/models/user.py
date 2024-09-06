@@ -12,7 +12,7 @@ class Follow(db.Model):
     __tablename__ = 'follows'
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -40,6 +40,7 @@ class User(db.Model):
     comments = db.relationship('Comment', back_populates='author', lazy='dynamic')
     chat_messages = db.relationship('ChatMessage', back_populates ='author')
     chat_rooms = db.relationship('ChatRoom', secondary='user_chat_rooms', back_populates='users')
+    lab_questions = db.relationship('LabQuestion', back_populates='author')
     lab_messages = db.relationship('LabMessage', back_populates ='author')
     lab_rooms = db.relationship('LabRoom', secondary='user_lab_rooms', back_populates='users')
     followed = db.relationship('Follow',
