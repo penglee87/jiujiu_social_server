@@ -32,6 +32,7 @@ class UserLabRoom(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     lab_room_id = db.Column(db.Integer, db.ForeignKey('lab_rooms.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_delete = db.Column(db.Boolean, default=False)
 
     db.UniqueConstraint('user_id', 'lab_room_id', name='unique_user_lab_room')
 

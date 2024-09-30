@@ -163,3 +163,40 @@ def lab_get_messages(lab_room_id):
         "data": messages
     }), 200
     
+
+@api_bl.route('/lab/rooms', methods=['GET'])
+@jwt_required()
+def get_lab_rooms():
+    openid = get_jwt_identity()
+    current_user = User.query.filter_by(openid=openid).first()
+    if not current_user:
+        return jsonify({'message': 'User not found'}), 404
+
+    lab_rooms = LabRoom.query.join(LabRoom.users).filter(User.id == current_user.id).all()
+    formatted_rooms = []
+    for room in lab_rooms:
+        # 获取最后一条消息
+        last_message = LabMessage.query.filter_by(lab_room_id=room.id).order_by(LabMessage.created_at.desc()).first()
+        
+        # 解析房间名
+        user_ids = [int(uid) for uid in room.name.split('_')]
+        first_user_id = user_ids[0]
+        second_user_id = user_ids[1]
+        recipient_id = next(uid for uid in user_ids if uid != current_user.id)
+
+        formatted_rooms.append({
+            'room_id': room.id,
+            'first_user_id':first_user_id,
+            'second_user_id':second_user_id,
+            'recipient_id':recipient_id,
+            'last_message': {
+                'question': last_message.question.question_body if last_message else '',
+                'answer': last_message.answer if last_message else '',
+                'created_at': last_message.created_at.isoformat() if last_message else ''
+            }
+        })
+
+    return jsonify({
+        "message": "Lab rooms loaded successfully",
+        "data": formatted_rooms
+    }), 200

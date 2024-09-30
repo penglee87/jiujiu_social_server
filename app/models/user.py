@@ -101,10 +101,12 @@ class User(db.Model):
         if f:
             db.session.delete(f)
 
+
     def is_following(self, user):
         if user.id is None:
             return False
         return self.followed.filter_by(followed_id=user.id).first() is not None
+
 
     def is_followed_by(self, user):
         if user.id is None:
@@ -114,6 +116,7 @@ class User(db.Model):
     @property
     def followed_posts(self):
         return Post.query.join(Follow, Follow.followed_id == Post.author_id).filter(Follow.follower_id == self.id)
+    
 
     def to_json(self):
         json_user = {
